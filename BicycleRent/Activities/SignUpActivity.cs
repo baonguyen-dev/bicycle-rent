@@ -10,7 +10,7 @@ using static Android.Views.View;
 namespace BicycleRent
 {
     [Activity(Label = "SignUp", Theme = "@style/AppTheme")]
-    public class SignUp : Activity, IOnClickListener, IOnCompleteListener
+    public class SignUpActivity : Activity, IOnClickListener, IOnCompleteListener
     {
         Button btnSignup;
         TextView btnLogin, btnForgetPass;

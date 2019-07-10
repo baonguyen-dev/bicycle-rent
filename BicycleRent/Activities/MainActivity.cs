@@ -17,7 +17,6 @@ namespace BicycleRent
         Button btnLogin;
         EditText input_email, input_password;
         TextView btnSignUp, btnForgetPassword;
-        RelativeLayout activity_main;
         public static FirebaseApp app;
         FirebaseAuth auth;
         protected override void OnCreate(Bundle savedInstanceState)
@@ -33,7 +32,6 @@ namespace BicycleRent
             input_password = FindViewById<EditText>(Resource.Id.login_password);
             btnSignUp = FindViewById<TextView>(Resource.Id.login_btn_sign_up);
             btnForgetPassword = FindViewById<TextView>(Resource.Id.login_btn_forget_password);
-            activity_main = FindViewById<RelativeLayout>(Resource.Id.activity_main);
             btnSignUp.SetOnClickListener(this);
             btnLogin.SetOnClickListener(this);
             btnForgetPassword.SetOnClickListener(this);
@@ -58,7 +56,7 @@ namespace BicycleRent
             else
             if (v.Id == Resource.Id.login_btn_sign_up)
             {
-                StartActivity(new Android.Content.Intent(this, typeof(SignUp)));
+                StartActivity(new Android.Content.Intent(this, typeof(SignUpActivity)));
                 Finish();
             }
             else
@@ -69,19 +67,19 @@ namespace BicycleRent
         }
         private void LoginUser(string email, string password)
         {
-            auth.SignInWithEmailAndPassword(email, password).AddOnCompleteListener(this);
+            if(!string.IsNullOrEmpty(email) & !string.IsNullOrEmpty(password))
+                auth.SignInWithEmailAndPassword(email, password).AddOnCompleteListener(this);
         }
         public void OnComplete(Task task)
         {
             if (task.IsSuccessful)
             {
-                StartActivity(new Android.Content.Intent(this, typeof(DashBoard)));
+                StartActivity(new Android.Content.Intent(this, typeof(DashBoardActivity)));
                 Finish();
             }
             else
             {
-                Snackbar snackbar = Snackbar.Make(activity_main, "Login Failed ", Snackbar.LengthShort);
-                snackbar.Show();
+                Toast.MakeText(this, "Login Failed", ToastLength.Long).Show();
             }
         }
     }
