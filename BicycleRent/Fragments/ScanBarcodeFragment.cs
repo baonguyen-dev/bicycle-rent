@@ -12,6 +12,7 @@ using Android.Views;
 using Android.Widget;
 using ZXing.Mobile;
 using static Android.Manifest;
+using BicycleRent.Interfaces;
 
 namespace BicycleRent
 {

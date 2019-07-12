@@ -11,32 +11,42 @@ using Android.Support.V4.Widget;
 using Android.Support.V7.App;
 using Android.Views;
 using Android.Widget;
+using BicycleRent.Interfaces;
 using Firebase.Auth;
 using Firebase.Database;
 using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using ZXing.Mobile;
+using Java.Lang;
 using static Android.Views.View;
+using System.Linq;
+using BicycleRent.Fragments;
+using Android.Gms.Maps.Model;
+using Android.Gms.Maps;
+
 namespace BicycleRent
 {
     [Activity(Label = "DashBoard", Theme = "@style/AppTheme")]
     public class DashBoardActivity : AppCompatActivity, IOnClickListener, IOnCompleteListener, IValueEventListener
     {
         int REQUEST_CAMERA = 0;
-        private TextView txtWelcome;
-        private EditText input_new_password;
-        private Button btnChangePass, btnLogout, _btnScan;
-        private RelativeLayout activity_dashboard;
+        private TextView _txtWelcome;
+        private EditText _input_new_password;
+        private Button _btnChangePass, _btnLogout, _btnScan, _btnShowMap;
+        private RelativeLayout _activity_dashboard;
         private FirebaseAuth auth;
         private string _FirebaseURL = "https://bicycle-rent.firebaseio.com/";
-        private DatabaseReference myQR;
+        private DatabaseReference _dbRef;
         private FirebaseDatabase _database;
-        private string _value;
+        private string _value, _qrValue1, _qrValue2;
+        private MapTrackingFragment _map;
+        private Android.Support.V4.App.FragmentManager _fragmentManager;
 
         public void OnClick(View v)
         {
             if (v.Id == Resource.Id.dashboard_btn_change_pass)
-                ChangePassword(input_new_password.Text);
+                ChangePassword(_input_new_password.Text);
             else if (v.Id == Resource.Id.dashboard_btn_logout)
                 LogoutUser();
         }
@@ -66,21 +76,28 @@ namespace BicycleRent
             auth = FirebaseAuth.GetInstance(MainActivity.app);
             //Init Database
             _database = FirebaseDatabase.GetInstance(_FirebaseURL);
-            myQR = _database.GetReference("QR");
-            myQR.AddValueEventListener(this);
+            InitChild();
             //View  
-            btnChangePass = FindViewById<Button>(Resource.Id.dashboard_btn_change_pass);
-            txtWelcome = FindViewById<TextView>(Resource.Id.dashboard_welcome);
-            btnLogout = FindViewById<Button>(Resource.Id.dashboard_btn_logout);
-            input_new_password = FindViewById<EditText>(Resource.Id.dashboard_newpassword);
-            activity_dashboard = FindViewById<RelativeLayout>(Resource.Id.activity_main);
+            _btnChangePass = FindViewById<Button>(Resource.Id.dashboard_btn_change_pass);
+            _txtWelcome = FindViewById<TextView>(Resource.Id.txtWelcome);
+            _btnLogout = FindViewById<Button>(Resource.Id.dashboard_btn_logout);
+            _input_new_password = FindViewById<EditText>(Resource.Id.dashboard_newpassword);
+            _activity_dashboard = FindViewById<RelativeLayout>(Resource.Id.activity_main);
             _btnScan = FindViewById<Button>(Resource.Id.btnScan);
+            _btnShowMap = FindViewById<Button>(Resource.Id.btnShowMap);
             _btnScan.Click += _btnScan_Click;
-            btnChangePass.SetOnClickListener(this);
-            btnLogout.SetOnClickListener(this);
+            _btnShowMap.Click += _btnShowMap_Click;
+            _btnChangePass.SetOnClickListener(this);
+            _btnLogout.SetOnClickListener(this);
             //Check Session  
             if (auth != null)
-                txtWelcome.Text = "Welcome , " + auth.CurrentUser.Email;
+                _txtWelcome.Text = "Welcome , " + auth.CurrentUser.Email;
+        }
+
+        private void _btnShowMap_Click(object sender, EventArgs e)
+        {
+            _map = MapTrackingFragment.NewInstance();
+            ReplaceFragment(_map);
         }
 
         private void _btnScan_Click(object sender, System.EventArgs e)
@@ -104,8 +121,11 @@ namespace BicycleRent
                             {
                                 if (fragment.IsVisible && fragment is ScanBarcodeFragment)
                                 {
-                                    SetLockValue(scanResult);
-                                    ((ScanBarcodeFragment)fragment).FragmentManager.BeginTransaction().Remove(fragment).Commit();
+                                    RunOnUiThread(() =>
+                                    {
+                                        ((ScanBarcodeFragment)fragment).FragmentManager.BeginTransaction().Remove(fragment).Commit();
+                                        SetLockValue(scanResult);
+                                    });
                                 }
                             }
                         });
@@ -115,9 +135,18 @@ namespace BicycleRent
             }
         }
 
+        private void InitChild()
+        {
+            _dbRef = _database.Reference;
+            _dbRef.AddValueEventListener(this);
+        }
+
         private void ReplaceFragment(Android.Support.V4.App.Fragment fragment)
         {
-            var ff = SupportFragmentManager.BeginTransaction().Replace(Resource.Id.fContent, fragment);
+            _fragmentManager = ((FragmentActivity)this).SupportFragmentManager;
+            var ff = _fragmentManager.BeginTransaction()
+                .AddToBackStack(fragment.ToString())
+                .Replace(Resource.Id.fContent, fragment);
             if (!SupportFragmentManager.IsStateSaved)
             {
                 ff.Commit();
@@ -136,32 +165,52 @@ namespace BicycleRent
             }
         }
 
-        private void SetLockValue(string myValue)
+        private void SetLockValue(string qrValue)
         {
-            if (!string.IsNullOrEmpty(_value))
+            if (!string.IsNullOrEmpty(qrValue))
             {
-                if (_value.Contains(','))
+                var text1 = _qrValue1.Split(',')[0];
+                var num1 = _qrValue1.Split(',')[1];
+                var text2 = _qrValue2.Split(',')[0];
+                var num2 = _qrValue2.Split(',')[1];
+
+                if (qrValue == text1)
                 {
-                    var _lockValue = _value.Split(',')[1];
-                    if (_lockValue == "0")
+                    if (num1 == "1")
                     {
-                        myQR.SetValueAsync(myValue + ',' + "1");
+                        _dbRef.Child("QR1").SetValueAsync(qrValue + "," + "0");
                     }
-                    else myQR.SetValueAsync(myValue + ',' + "0");
+                    else
+                    {
+                        _dbRef.Child("QR1").SetValueAsync(qrValue + "," + "1");
+                    }
+                }
+                else if (qrValue == text2)
+                {
+                    if (num2 == "1")
+                    {
+                        _dbRef.Child("QR2").SetValueAsync(qrValue + "," + "0");
+                    }
+                    else
+                    {
+                        _dbRef.Child("QR2").SetValueAsync(qrValue + "," + "1");
+                    }
                 }
                 else
                 {
-                    if(_value == "0")
-                    {
-                        myQR.SetValueAsync(myValue + ',' + "1");
-                    }
-                    else myQR.SetValueAsync(myValue + ',' + "0");
+                    Toast.MakeText(this, "Bike Not Found", ToastLength.Long).Show();
                 }
             }
-            else
+        }
+
+        public override void OnBackPressed()
+        {
+            if (_fragmentManager.BackStackEntryCount > 0)
             {
-                myQR.SetValueAsync(myValue + ',' + "1");
+                _fragmentManager.PopBackStackImmediate();
             }
+            else
+                base.OnBackPressed();
         }
 
         public void OnCancelled(DatabaseError error)
@@ -172,7 +221,28 @@ namespace BicycleRent
         {
             if (snapshot.Exists())
             {
-                _value = snapshot.GetValue(true).ToString();
+                foreach (var snapChild in snapshot.Children?.ToEnumerable<DataSnapshot>())
+                {
+                    if (snapChild.Key.ToString() == "LatLng")
+                    {
+                        _value = snapChild.GetValue(true).ToString();
+                        LatLng latLng = new LatLng(double.Parse(_value.Split(',')[0]), double.Parse(_value.Split(',')[1]));
+                        if (_map != null)
+                            _map.MarkerChangePosition(latLng);
+                    }
+                    if (snapChild.Key.ToString() == "QR1")
+                    {
+                        _qrValue1 = snapChild.GetValue(true).ToString();
+                    }
+                    if (snapChild.Key.ToString() == "QR2")
+                    {
+                        _qrValue2 = snapChild.GetValue(true).ToString();
+                    }
+                    if (snapChild.Key.ToString() == "Cycle")
+                    {
+                        Toast.MakeText(this, snapChild.GetValue(true).ToString() + " " + "km", ToastLength.Long).Show();
+                    }
+                }
             }
         }
     }

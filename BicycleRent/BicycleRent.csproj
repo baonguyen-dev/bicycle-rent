@@ -60,7 +60,9 @@
     <Compile Include="Activities\ForgetPasswordActivity.cs" />
     <Compile Include="Activities\MainActivity.cs" />
     <Compile Include="Activities\SignUpActivity.cs" />
+    <Compile Include="Fragments\MapTrackingFragment.cs" />
     <Compile Include="Fragments\ScanBarcodeFragment.cs" />
+    <Compile Include="Interfaces\IBackButtonListener.cs" />
     <Compile Include="Resources\Resource.designer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -122,6 +124,9 @@
     <PackageReference Include="Xamarin.Firebase.Database">
       <Version>60.1142.1</Version>
     </PackageReference>
+    <PackageReference Include="Xamarin.GooglePlayServices.Maps">
+      <Version>60.1142.1</Version>
+    </PackageReference>
     <PackageReference Include="ZXing.Net.Mobile">
       <Version>2.4.1</Version>
     </PackageReference>
@@ -151,6 +156,17 @@
   </ItemGroup>
   <ItemGroup>
     <AndroidResource Include="Resources\layout\ScanBarcodeFragment.axml">
+      <SubType>Designer</SubType>
+    </AndroidResource>
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\mipmap-hdpi\bicycle.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\values\dimens.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\layout\MapTrackingFragment.axml">
       <SubType>Designer</SubType>
     </AndroidResource>
   </ItemGroup>

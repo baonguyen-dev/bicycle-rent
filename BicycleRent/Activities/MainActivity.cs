@@ -8,6 +8,7 @@ using static Android.Views.View;
 using Android.Views;
 using Android.Gms.Tasks;
 using Android.Support.Design.Widget;
+using Android.Content;
 
 namespace BicycleRent
 {
@@ -51,13 +52,11 @@ namespace BicycleRent
             if (v.Id == Resource.Id.login_btn_forget_password)
             {
                 StartActivity(new Android.Content.Intent(this, typeof(ForgetPassword)));
-                Finish();
             }
             else
             if (v.Id == Resource.Id.login_btn_sign_up)
             {
                 StartActivity(new Android.Content.Intent(this, typeof(SignUpActivity)));
-                Finish();
             }
             else
             if (v.Id == Resource.Id.login_btn_login)
@@ -75,7 +74,6 @@ namespace BicycleRent
             if (task.IsSuccessful)
             {
                 StartActivity(new Android.Content.Intent(this, typeof(DashBoardActivity)));
-                Finish();
             }
             else
             {
